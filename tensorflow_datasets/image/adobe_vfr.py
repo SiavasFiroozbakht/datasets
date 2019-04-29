@@ -105,7 +105,7 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, dl_manager):
         """Returns SplitGenerators."""
-        path = dl_manager.manual_dir
+        path = '/data2/VFRForWeb/'
         if self.builder_config.mode == "bcf":
             if not tf.io.gfile.exists(path):
                 message = "You must download the dataset files manually and place them in: " + dl_manager.manual_dir
