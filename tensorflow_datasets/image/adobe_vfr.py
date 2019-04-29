@@ -10,7 +10,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-import tensorflow_datasets as tfds
+import tensorflow_datasets.public_api as tfds
 # TODO(adobe_vfr): BibTeX citation
 from tensorflow_datasets.core import api_utils
 
