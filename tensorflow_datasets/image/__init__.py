@@ -15,6 +15,7 @@
 
 """Image datasets."""
 
+from tensorflow_datasets.image.adobe_vfr import AdobeVFR
 from tensorflow_datasets.image.caltech import Caltech101
 from tensorflow_datasets.image.cats_vs_dogs import CatsVsDogs
 from tensorflow_datasets.image.celeba import CelebA
