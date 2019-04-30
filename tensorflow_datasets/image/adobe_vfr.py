@@ -106,29 +106,17 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager):
         """Returns SplitGenerators."""
         path = '/data2/VFRForWeb/'
+        if not tf.io.gfile.exists(path):
+            throw_download_error()
         if self.builder_config.mode == "bcf":
-            if not tf.io.gfile.exists(path):
-                message = "You must download the dataset files manually and place them in: " + dl_manager.manual_dir
-                raise AssertionError(message)
-            path = os.path.join(path, "BCF format")
+            path = os.path.join(path, "BCF Format")
             train = os.path.join(path, "VFR_syn_train")
-            test = os.path.join(path, "VFR_real_test")
-            return [
-                tfds.core.SplitGenerator(
-                    name=tfds.Split.TRAIN,
-                    num_shards=5,
-                    gen_kwargs={
-                        "path": train, "mode": "train"
-                    },
-                ),
-                tfds.core.SplitGenerator(
-                    name=tfds.Split.TEST,
-                    num_shards=1,
-                    gen_kwargs={
-                        "path": test, "mode": "test"
-                    },
-                )
-            ]
+        elif self.builder_config.mode == 'raw':
+            path = os.path.join(path, "Raw Images")
+            train = os.path.join(path, "VFR_real_u")
+
+        test = os.path.join(path, "VFR_real_test")
+        return get_split_data(train, test)
 
     def _generate_examples(self, path, mode):
         """Yields examples."""
@@ -139,3 +127,25 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
                     io.BytesIO(images.get(i))),
                 "label": labels[i]
             }
+
+    def throw_download_error():
+        message = "You must download the dataset files manually and place them in: " + dl_manager.manual_dir
+        raise AssertionError(message)
+
+    def get_split_data(train_path, test_path):
+        return [
+                tfds.core.SplitGenerator(
+                    name=tfds.Split.TRAIN,
+                    num_shards=5,
+                    gen_kwargs={
+                        "path": train_path, "mode": "train"
+                    },
+                ),
+                tfds.core.SplitGenerator(
+                    name=tfds.Split.TEST,
+                    num_shards=1,
+                    gen_kwargs={
+                        "path": test_path, "mode": "test"
+                    },
+                )
+            ]
