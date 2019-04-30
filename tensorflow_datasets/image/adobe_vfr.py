@@ -77,16 +77,16 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
 
     BUILDER_CONFIGS = [
         AdobeVFRConfig(
-            name='AdobeVFR BCF',
-            description="A collection of images",
+            name='AdobeVFR Synthetic',
+            description="Synthetic (computer generated) images with texts for font recognition.",
             version="0.1.0",
-            mode="bcf",
+            mode="syn",
         ),
         AdobeVFRConfig(
-            name='AdobeVFR RAW',
-            description="A collection of images",
+            name='AdobeVFR Real-world',
+            description="Real-world images with texts for font recognition.",
             version="0.1.0",
-            mode="raw",
+            mode="real",
         )
     ]
 
@@ -104,19 +104,25 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager):
-        """Returns SplitGenerators."""
-        path = '/data2/VFRForWeb/'
+        """
+        Returns SplitGenerators.
+
+        Throws assertion error if required files were not found.
+        """
+        path = dl_manager.manual_dir
         if not tf.io.gfile.exists(path):
-            throw_download_error()
-        if self.builder_config.mode == "bcf":
+            self.throw_download_error(dl_manager.manual_dir)
+        if self.builder_config.mode == "syn":
             path = os.path.join(path, "BCF Format")
             train = os.path.join(path, "VFR_syn_train")
-        elif self.builder_config.mode == 'raw':
+        # elif self.builder_config.mode == 'raw':
+        else:
             path = os.path.join(path, "Raw Images")
             train = os.path.join(path, "VFR_real_u")
 
+        # Original dataset has wrong label for VFR_syn_test
         test = os.path.join(path, "VFR_real_test")
-        return get_split_data(train, test)
+        return self.get_split_data(train, test)
 
     def _generate_examples(self, path, mode):
         """Yields examples."""
@@ -128,11 +134,11 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
                 "label": labels[i]
             }
 
-    def throw_download_error():
-        message = "You must download the dataset files manually and place them in: " + dl_manager.manual_dir
+    def throw_download_error(self, path):
+        message = "You must download the dataset files manually and place them in: " + path
         raise AssertionError(message)
 
-    def get_split_data(train_path, test_path):
+    def get_split_data(self, train_path, test_path):
         return [
                 tfds.core.SplitGenerator(
                     name=tfds.Split.TRAIN,
