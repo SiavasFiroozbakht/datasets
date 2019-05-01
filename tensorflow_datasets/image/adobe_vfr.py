@@ -27,24 +27,30 @@ _ADOBEVFR_IMAGE_SHAPE = (_ADOBEVFR_IMAGE_SIZE, _ADOBEVFR_IMAGE_SIZE, 1)
 
 _LABELS_FILENAME = 'fontlist.txt'
 
+
 class bcf: #TODO Switch to tf.io.gfile
     def __init__(self, filename):
         self._filename = filename
         self._file = open(filename, 'rb')
         print(type(self._file))
-        size = np.uint32(np.frombuffer(self._file.read(8), dtype=np.uint32)[0])
-        file_sizes = np.frombuffer(self._file.read(8 * size),
+        self.totalSize = np.uint32(np.frombuffer(self._file.read(8), dtype=np.uint32)[0])
+        file_sizes = np.frombuffer(self._file.read(8 * self.totalSize),
                                    dtype=np.uint64)
-        # print("File sizes", file_sizes)
+        print("File sizes", file_sizes)
         self._offsets = np.append(np.uint64(0),
                                   np.add.accumulate(file_sizes))
         # print('BCF initialised')
 
     def get(self, i):
-        # print("get image", i)
+        print(i)
+        # self._file.seek(self._offsets[i], os.SEEK_CUR)
         self._file.seek(np.int32(len(self._offsets) * 8 + self._offsets[i]))
         # print(self._file)
-        image = self._file.read(self._offsets[i + 1] - self._offsets[i])
+        # image = self._file.read(self._offsets[i])
+        if i + 1 < self._offsets.size:
+            image = self._file.read(self._offsets[i + 1] - self._offsets[i])
+        else:
+            image = self._file.read(self.totalSize)
         # print(image, type(image))
         return image
         # return self._file.read(self._offsets[i + 1] - self._offsets[i])
@@ -108,13 +114,17 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
 
     def _info(self):
         # print(os.path.join(dl_manager.manual_dir, _LABELS_FILENAME))
+        labels_file = os.path.join( _LABELS_FILENAME)
+        print("Getting labels from", labels_file)
+        # path = os.path.join(path, "BCF Format")
+
         return tfds.core.DatasetInfo(
             builder=self,
             description=_DESCRIPTION,
             features=tfds.features.FeaturesDict({
                 "image": tfds.features.Image(shape=_ADOBEVFR_IMAGE_SHAPE),
-                "label": tfds.features.ClassLabel(num_classes=100)
-                # "label": tfds.features.ClassLabel(num_classes=100, names_file=os.path.join(dl_manager.manual_dir, _LABELS_FILENAME))
+                # "label": tfds.features.ClassLabel(num_classes=100)
+                "label": tfds.features.ClassLabel(num_classes=2383)
             }),
             supervised_keys=("image", "label"),
             urls=[],
@@ -167,7 +177,8 @@ class AdobeVFR(tfds.core.GeneratorBasedBuilder):
         """Yields examples."""
         print("Generating examples")
         images, labels = read_bcf(path, mode)
-        for i in range(images.size()):
+        for i in range(100):
+        # for i in range(images.size()):
             # print("iteration", i)
             # print(images.get(i), labels[i])
             # with tf.io.gfile.GFile(image_filepath, "rb") as f:
